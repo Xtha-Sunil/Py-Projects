@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pixel Art | Grid</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: #152030;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: #fff;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(18, 20px);
+        gap: 2px;
+        margin-bottom: 20px;
+      }
+      .days_box {
+        height: 20px;
+        width: 20px;
+        border: 1px solid black;
+        background-color: white;
+        cursor: pointer;
+      }
+      .tools {
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      button.white {
+        background-color: white;
+        color: black;
+      }
+      button.green-light {
+        background-color: #59d576;
+        color: black;
+      }
+      button.green-dark {
+        background-color: green;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="grid"></div>
+      <div class="tools">
+        <button class="white" onclick="setColor('white', 0)">0 commits</button>
+        <button class="green-light" onclick="setColor('#66cdaa', 2)">
+          2 commits
+        </button>
+        <button class="green-dark" onclick="setColor('green', 7)">
+          7 commits
+        </button>
+      </div>
+      <div>
+        <button onclick="downloadCommitData()">Save</button>
+      </div>
+    </div>
+
+    <script>
+      const grid = document.querySelector(".grid");
+      const columns = 18;
+      const rows = 7;
+      const startDate = new Date("2024-08-01"); // Starting date for the grid
+      let currentColor = "white";
+      let currentCommits = 0;
+
+      let gridContent = "";
+
+      // Generate the grid
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < columns; col++) {
+          const dayOffset = row + col * rows;
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + dayOffset);
+
+          const formattedDate = date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+          gridContent += `<div class="days_box" data-date="${formattedDate}" data-commit="0" style="background-color: white;"></div>`;
+        }
+      }
+
+      grid.innerHTML = gridContent;
+
+      function setColor(color, commits) {
+        currentColor = color;
+        currentCommits = commits;
+      }
+
+      grid.addEventListener("click", (e) => {
+        if (e.target.classList.contains("days_box")) {
+          e.target.style.backgroundColor = currentColor;
+          e.target.setAttribute("data-commit", currentCommits);
+        }
+      });
+
+      function downloadCommitData() {
+        const daysBoxElements = document.querySelectorAll(".days_box");
+        const data = {};
+
+        daysBoxElements.forEach((element) => {
+          const date = element.getAttribute("data-date");
+          const commits = element.getAttribute("data-commit");
+          data[date] = `${commits} commits`;
+        });
+
+        // Sort the dates
+        const sortedData = Object.keys(data)
+          .sort() // Sort dates as strings (YYYY-MM-DD format works with string sorting)
+          .reduce((acc, date) => {
+            acc[date] = data[date];
+            return acc;
+          }, {});
+
+        // Convert the sorted data to a JSON string
+        const json = JSON.stringify(sortedData, null, 2);
+
+        // Create a Blob with the JSON data
+        const blob = new Blob([json], { type: "application/json" });
+
+        // Create a link element and set its href to the Blob URL
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "commit_data.json"; // Name of the downloaded file
+
+        // Append the link to the document, click it, and remove it
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    </script>
+  </body>
+</html>
